@@ -1,6 +1,7 @@
 package com.example.binapp
 
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.EditText
@@ -15,6 +16,10 @@ import com.example.binapp.databinding.ActivityMainBinding
 import com.example.binapp.model.BankModel
 import com.example.binapp.model.HistoryModel
 import org.json.JSONObject
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 
 
 class MainActivity : AppCompatActivity() {
@@ -36,12 +41,15 @@ class MainActivity : AppCompatActivity() {
 
         bin_num = findViewById(R.id.bin_num)
 
+        initialStart()
+
         binding.mainBtn.setOnClickListener() {
             if (bin_num?.text?.toString()?.equals("")!!) {
                 Toast.makeText(this, "Enter Bin", Toast.LENGTH_LONG).show()
             } else {
                 getResult(bin_num!!.text.toString())
                 initial()
+                saveTextFile(bin_num!!.text.toString())
 
             }
         }
@@ -52,13 +60,38 @@ class MainActivity : AppCompatActivity() {
             searchHistory.layoutManager = LinearLayoutManager(this@MainActivity)
             searchHistory.adapter = adapter
             historyList.add(bin_num!!.text.toString())
+            saveTextFile(bin_num!!.text.toString())
             val his = HistoryModel(historyList[index])
             adapter.addHis(his)
             index++
         }
-
-
     }
+
+    private fun initialStart(){
+        binding.apply {
+            val fileOutputStream: FileInputStream =
+                openFileInput("mytextfile.txt")
+            val outputReader = InputStreamReader(fileOutputStream)
+            val read = outputReader.readLines()
+            outputReader.close()
+            searchHistory.layoutManager = LinearLayoutManager(this@MainActivity)
+            searchHistory.adapter = adapter
+            read.forEach{
+                historyList.add(it)
+                val his = HistoryModel(historyList[index])
+                adapter.addHis(his)
+                index++
+            }
+        }
+    }
+    fun saveTextFile(bin: String) {
+            val fileOutputStream: FileOutputStream =
+                openFileOutput("mytextfile.txt", Context.MODE_PRIVATE)
+            val outputWriter = OutputStreamWriter(fileOutputStream)
+            outputWriter.write(bin)
+            outputWriter.close()
+            //display file saved message
+        }
 
     private fun getResult(bin: String) {
         val url = "https://lookup.binlist.net/$bin"
